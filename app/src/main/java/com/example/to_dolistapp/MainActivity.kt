@@ -130,7 +130,11 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         }
                     }
                 )
-
+                TaskSummaryCard(
+                    todo = pendingTasks.size,
+                    completed = doneTasks.size,
+                    total = filteredTasks.size
+                )
                 if (viewMode == TaskViewModel.ViewMode.DAILY) {
                     DailyHeader(
                         date = selectedDate,
@@ -349,6 +353,7 @@ fun SectionHeader(label: String, isError: Boolean = false, isPrimary: Boolean = 
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskItem(
     task: Task,
@@ -358,91 +363,129 @@ fun TaskItem(
     showFullDate: Boolean = false
 ) {
     val isPast = task.deadline.isBefore(LocalDateTime.now()) && !task.isCompleted
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (task.isCompleted)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-            else
-                MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (task.isCompleted) 0.dp else 1.dp),
-        border = if (isPast) BorderStroke(2.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.8f)) else null
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = { onCheckedChange(!task.isCompleted) },
-                modifier = Modifier.size(24.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            if (task.isCompleted) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (task.isCompleted) {
-                        Icon(
-                            imageVector = Icons.Default.Check,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
+    
+    // 1. State untuk mengatur posisi swipe
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                onDelete() // Panggil hapus saat swipe dari kanan ke kiri
+                true
+            } else {
+                false
             }
+        }
+    )
 
-            Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.Medium,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
-                    ),
-                    color = if (task.isCompleted)
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    else
-                        MaterialTheme.colorScheme.onSurface
-                )
+    // 2. Wrapper SwipeToDismissBox
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false, // Hanya swipe dari kanan ke kiri
+        backgroundContent = {
+            // Latar belakang merah yang muncul saat swipe
+            val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                MaterialTheme.colorScheme.errorContainer
+            } else Color.Transparent
 
-                val deadlineText = if (showFullDate || task.isCompleted) {
-                    task.deadline.format(DateTimeFormatter.ofPattern("dd MMM, HH:mm"))
-                } else {
-                    task.deadline.format(DateTimeFormatter.ofPattern("HH:mm"))
-                }
-
-                Text(
-                    text = deadlineText,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (isPast)
-                        MaterialTheme.colorScheme.error
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            IconButton(
-                onClick = onDelete,
-                modifier = Modifier.size(24.dp)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(color)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
             ) {
                 Icon(
-                    Icons.Default.Delete,
+                    imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
-                    tint = MaterialTheme.colorScheme.outline,
-                    modifier = Modifier.size(20.dp)
+                    tint = MaterialTheme.colorScheme.error
                 )
+            }
+        }
+    ) {
+        // 3. Konten asli (Card) kamu ditaruh di sini
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .clickable { onClick() },
+            colors = CardDefaults.cardColors(
+                containerColor = if (task.isCompleted)
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                else
+                    MaterialTheme.colorScheme.surface
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = if (task.isCompleted) 0.dp else 1.dp),
+            border = if (isPast) BorderStroke(2.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.8f)) else null
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // ... isi Row (IconButton check, Column teks, dsb) tetap sama seperti kode awal kamu ...
+                // Kamu bisa hapus IconButton delete yang lama jika ingin full swipe saja
+                
+                IconButton(
+                    onClick = { onCheckedChange(!task.isCompleted) },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(
+                                if (task.isCompleted) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (task.isCompleted) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onPrimary
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium,
+                            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null
+                        ),
+                        color = if (task.isCompleted)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    )
+
+                    val deadlineText = if (showFullDate || task.isCompleted) {
+                        task.deadline.format(DateTimeFormatter.ofPattern("dd MMM, HH:mm"))
+                    } else {
+                        task.deadline.format(DateTimeFormatter.ofPattern("HH:mm"))
+                    }
+
+                    Text(
+                        text = deadlineText,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isPast) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                
+                // Ikon delete tetap ada sebagai alternatif klik
+                IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -471,6 +514,62 @@ fun DeleteConfirmDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
         },
         shape = RoundedCornerShape(28.dp)
     )
+}
+
+@Composable
+fun TaskSummaryCard(todo: Int, completed: Int, total: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp) 
+    ) {
+        SummaryItem(
+            label = "Active", 
+            count = todo, 
+            modifier = Modifier.weight(1f),
+            color = Color(0xFF00796B) // Hijau gelap
+        )
+        SummaryItem(
+            label = "Done", 
+            count = completed, 
+            modifier = Modifier.weight(1f),
+            color = Color(0xFF388E3C) // Hijau daun
+        )
+        SummaryItem(
+            label = "Total", 
+            count = total, 
+            modifier = Modifier.weight(1f),
+            color = Color(0xFF455A64) // Abu-abu gelap
+        )
+    }
+}
+
+@Composable
+fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier, color: Color) {
+    Surface(
+        modifier = modifier,
+        color = Color.White,
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+    ) {
+        Column(
+            modifier = Modifier.padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = count.toString(),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
+                color = color
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                color = color.copy(alpha = 0.8f)
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

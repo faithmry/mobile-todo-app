@@ -27,6 +27,37 @@ class TaskViewModel : ViewModel() {
         ALL, DAILY
     }
 
+    init {
+        _tasks.value = listOf(
+            Task(
+                title = "Mengerjakan Projek Android",
+                deadline = LocalDateTime.now().plusHours(2),
+                isCompleted = false
+            ),
+            Task(
+                title = "Beli Kopi Susu",
+                deadline = LocalDateTime.now().plusDays(1),
+                isCompleted = false
+            ),
+            Task(
+                title = "Olahraga ",
+                deadline = LocalDateTime.now().minusDays(1),
+                isCompleted = true
+            ),
+            Task(
+                title = "Kelas Mobile Programming",
+                deadline = LocalDateTime.now().plusHours(5),
+                isCompleted = false
+            ),
+            Task(
+                title = "Belajar Jetpack Compose",
+                deadline = LocalDateTime.now().plusDays(2),
+                isCompleted = false
+            )
+        )
+        sortTasks() 
+    }
+
     fun addTask(title: String, deadline: LocalDateTime) {
         val newTask = Task(title = title, deadline = deadline)
         _tasks.value = _tasks.value + newTask
