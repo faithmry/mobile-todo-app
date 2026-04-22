@@ -144,17 +144,17 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         }
                     }
                 )
-                TaskSummaryCard(
-                    todo = pendingTasks.size,
-                    completed = doneTasks.size,
-                    total = filteredTasks.size
-                )
                 if (viewMode == TaskViewModel.ViewMode.DAILY) {
                     DailyHeader(
                         date = selectedDate,
                         onClick = { showDatePickerForMode = true }
                     )
                 }
+                TaskSummaryCard(
+                    todo = pendingTasks.size,
+                    completed = doneTasks.size,
+                    total = filteredTasks.size
+                )
             }
         },
         floatingActionButton = {
