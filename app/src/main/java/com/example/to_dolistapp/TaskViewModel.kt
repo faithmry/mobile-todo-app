@@ -18,7 +18,12 @@ class TaskViewModel : ViewModel() {
 
     private val _selectedDate = mutableStateOf(LocalDate.now())
     val selectedDate: State<LocalDate> = _selectedDate
+    private val _isDarkMode = mutableStateOf<Boolean?>(null) // null artinya ikut sistem
+    val isDarkMode: State<Boolean?> = _isDarkMode
 
+    fun toggleTheme(dark: Boolean) {
+        _isDarkMode.value = dark
+    }
     enum class SortOrder {
         DEADLINE, STATUS
     }

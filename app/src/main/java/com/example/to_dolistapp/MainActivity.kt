@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,7 +48,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ToDoListTheme {
+            val isDarkByViewModel by viewModel.isDarkMode
+            val darkTheme = isDarkByViewModel ?: isSystemInDarkTheme()
+            ToDoListTheme(darkTheme = darkTheme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -104,6 +109,15 @@ fun TaskScreen(viewModel: TaskViewModel) {
                         }
                     },
                     actions = {
+                        val isDark by viewModel.isDarkMode
+                        IconButton(onClick = { 
+                            viewModel.toggleTheme(!(isDark ?: false)) 
+                        }) {
+                            Icon(
+                                imageVector = if (isDark == true) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = "Toggle Theme"
+                            )
+                        }
                         Box {
                             IconButton(onClick = { showSortMenu = true }) {
                                 Icon(Icons.Default.Sort, contentDescription = "Sort")
@@ -364,11 +378,10 @@ fun TaskItem(
 ) {
     val isPast = task.deadline.isBefore(LocalDateTime.now()) && !task.isCompleted
     
-    // 1. State untuk mengatur posisi swipe
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
             if (it == SwipeToDismissBoxValue.EndToStart) {
-                onDelete() // Panggil hapus saat swipe dari kanan ke kiri
+                onDelete() 
                 true
             } else {
                 false
@@ -376,12 +389,10 @@ fun TaskItem(
         }
     )
 
-    // 2. Wrapper SwipeToDismissBox
     SwipeToDismissBox(
         state = dismissState,
-        enableDismissFromStartToEnd = false, // Hanya swipe dari kanan ke kiri
+        enableDismissFromStartToEnd = false,
         backgroundContent = {
-            // Latar belakang merah yang muncul saat swipe
             val color = if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
                 MaterialTheme.colorScheme.errorContainer
             } else Color.Transparent
@@ -402,7 +413,6 @@ fun TaskItem(
             }
         }
     ) {
-        // 3. Konten asli (Card) kamu ditaruh di sini
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -423,8 +433,6 @@ fun TaskItem(
                     .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // ... isi Row (IconButton check, Column teks, dsb) tetap sama seperti kode awal kamu ...
-                // Kamu bisa hapus IconButton delete yang lama jika ingin full swipe saja
                 
                 IconButton(
                     onClick = { onCheckedChange(!task.isCompleted) },
@@ -477,7 +485,6 @@ fun TaskItem(
                     )
                 }
                 
-                // Ikon delete tetap ada sebagai alternatif klik
                 IconButton(onClick = onDelete, modifier = Modifier.size(24.dp)) {
                     Icon(
                         Icons.Default.Delete,
@@ -524,34 +531,19 @@ fun TaskSummaryCard(todo: Int, completed: Int, total: Int) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp) 
     ) {
-        SummaryItem(
-            label = "Active", 
-            count = todo, 
-            modifier = Modifier.weight(1f),
-            color = Color(0xFF00796B) // Hijau gelap
-        )
-        SummaryItem(
-            label = "Done", 
-            count = completed, 
-            modifier = Modifier.weight(1f),
-            color = Color(0xFF388E3C) // Hijau daun
-        )
-        SummaryItem(
-            label = "Total", 
-            count = total, 
-            modifier = Modifier.weight(1f),
-            color = Color(0xFF455A64) // Abu-abu gelap
-        )
+        SummaryItem(label = "Active", count = todo, modifier = Modifier.weight(1f))
+        SummaryItem(label = "Done", count = completed, modifier = Modifier.weight(1f))
+        SummaryItem(label = "Total", count = total, modifier = Modifier.weight(1f))
     }
 }
 
 @Composable
-fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier, color: Color) {
+fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color(0xFFEEEEEE))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier.padding(vertical = 12.dp),
@@ -561,12 +553,12 @@ fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier, color:
             Text(
                 text = count.toString(),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
-                color = color
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = color.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
         }
     }
