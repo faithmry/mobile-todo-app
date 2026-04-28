@@ -176,7 +176,7 @@ fun TaskScreen(viewModel: TaskViewModel) {
                     .fillMaxSize()
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 16.dp),
+                contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (sortOrder == TaskViewModel.SortOrder.DEADLINE && viewMode == TaskViewModel.ViewMode.ALL) {
@@ -381,11 +381,9 @@ fun TaskItem(
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = {
             if (it == SwipeToDismissBoxValue.EndToStart) {
-                onDelete() 
-                true
-            } else {
-                false
+                onDelete()
             }
+            false
         }
     )
 
@@ -416,16 +414,19 @@ fun TaskItem(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
                 .clickable { onClick() },
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = if (task.isCompleted)
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    MaterialTheme.colorScheme.surfaceContainerLow
                 else
                     MaterialTheme.colorScheme.surface
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = if (task.isCompleted) 0.dp else 1.dp),
-            border = if (isPast) BorderStroke(2.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.8f)) else null
+            elevation = CardDefaults.cardElevation(defaultElevation = if (task.isCompleted) 0.dp else 5.dp),
+            border = if (isPast)
+                BorderStroke(2.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.8f))
+            else
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Row(
                 modifier = Modifier
@@ -531,19 +532,36 @@ fun TaskSummaryCard(todo: Int, completed: Int, total: Int) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp) 
     ) {
-        SummaryItem(label = "Active", count = todo, modifier = Modifier.weight(1f))
-        SummaryItem(label = "Done", count = completed, modifier = Modifier.weight(1f))
-        SummaryItem(label = "Total", count = total, modifier = Modifier.weight(1f))
+        SummaryItem(
+            label = "Active", count = todo, modifier = Modifier.weight(1f),
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        SummaryItem(
+            label = "Done", count = completed, modifier = Modifier.weight(1f),
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+        SummaryItem(
+            label = "Total", count = total, modifier = Modifier.weight(1f),
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+        )
     }
 }
 
 @Composable
-fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier) {
+fun SummaryItem(
+    label: String,
+    count: Int,
+    modifier: Modifier = Modifier,
+    containerColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.surfaceVariant,
+    contentColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurfaceVariant
+) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = containerColor,
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier.padding(vertical = 12.dp),
@@ -553,12 +571,12 @@ fun SummaryItem(label: String, count: Int, modifier: Modifier = Modifier) {
             Text(
                 text = count.toString(),
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = contentColor
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                color = contentColor.copy(alpha = 0.8f)
             )
         }
     }
